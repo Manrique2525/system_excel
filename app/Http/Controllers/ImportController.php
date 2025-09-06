@@ -15,25 +15,28 @@ class ImportController extends Controller
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv'
         ]);
-
+    
         $file = $request->file('file');
-
+    
         // Leer todo el contenido de la primera hoja
         $sheets = Excel::toArray(null, $file);
         if (empty($sheets) || empty($sheets[0])) {
             return response()->json(['message' => 'Hoja vacía'], 422);
         }
-
+    
         $rows = $sheets[0];
-
-        // Usamos la primera fila como headers
+    
+        // Usamos la primera fila como headers y filtramos los vacíos
         $headersRaw = array_shift($rows);
         $headers = [];
-        foreach ($headersRaw as $i => $h) {
-            $headers[] = $h !== null ? trim((string)$h) : "COLUMN_{$i}";
+        foreach ($headersRaw as $h) {
+            $h = trim((string)$h);
+            if ($h !== '') {       // Solo agregar si no está vacío
+                $headers[] = $h;
+            }
         }
-
-        // Convertir cada fila en assoc header => value
+    
+        // Convertir cada fila en assoc header => value solo con headers válidos
         $data = [];
         foreach ($rows as $r) {
             $assoc = [];
@@ -42,12 +45,13 @@ class ImportController extends Controller
             }
             $data[] = $assoc;
         }
-
+    
         return response()->json([
             'headers' => $headers,
             'rows' => $data
         ]);
     }
+    
 
     // Generar archivo SQL directamente del Excel
     public function generateSql(Request $request)

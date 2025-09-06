@@ -1,10 +1,55 @@
 <template>
-  <div class="max-w-5xl mx-auto p-6">
+  <div class="max-w-5xl mx-auto p-6 space-y-6">
     <!-- Título -->
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Importar Excel y Generar SQL</h1>
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center animate-fadeIn">
+      Importar Excel y Generar SQL
+    </h1>
+
+    <!-- Sección de ejemplo de Excel -->
+    <div class="bg-blue-50 shadow rounded-lg p-6 animate-fadeInUp">
+      <h2 class="text-xl font-semibold mb-4">Ejemplo de Estructura del Excel</h2>
+      <p class="mb-3 text-gray-700">
+        Asegúrate de que tu archivo Excel tenga exactamente estos encabezados y columnas:
+      </p>
+      <div class="overflow-auto">
+        <table class="min-w-full border-collapse border border-blue-200 animate-pulse">
+          <thead class="bg-blue-200">
+            <tr>
+              <th class="px-3 py-2 border">Nombre</th>
+              <th class="px-3 py-2 border">Apellido Paterno</th>
+              <th class="px-3 py-2 border">Apellido Materno</th>
+              <th class="px-3 py-2 border">Correo Electrónico</th>
+              <th class="px-3 py-2 border">Dirección</th>
+              <th class="px-3 py-2 border">Teléfono</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="bg-blue-100">
+              <td class="px-3 py-1 border text-sm text-gray-600">Juan</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">Pérez</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">Gómez</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">juan@example.com</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">Calle 123</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">5551234567</td>
+            </tr>
+            <tr class="bg-blue-50">
+              <td class="px-3 py-1 border text-sm text-gray-600">María</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">López</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">Ramírez</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">maria@example.com</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">Av. Reforma 456</td>
+              <td class="px-3 py-1 border text-sm text-gray-600">5559876543</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-gray-500 text-sm italic">
+        Solo los encabezados importan, las filas son de ejemplo.
+      </p>
+    </div>
 
     <!-- Sección de subida de archivo -->
-    <div class="bg-white shadow rounded-lg p-6 mb-6">
+    <div class="bg-white shadow rounded-lg p-6 animate-fadeInUp delay-200">
       <h2 class="text-xl font-semibold mb-4">Selecciona un archivo Excel</h2>
       <div class="flex flex-col sm:flex-row gap-4 items-start">
         <input
@@ -14,7 +59,7 @@
           class="border border-gray-300 rounded px-3 py-2 w-full sm:w-auto"
         />
         <button
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded disabled:opacity-50"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded disabled:opacity-50 transition-all duration-300 transform hover:scale-105"
           @click="upload"
           :disabled="!file"
         >
@@ -25,12 +70,12 @@
       <!-- Spinner de carga -->
       <div v-if="loading" class="mt-4 flex items-center gap-3">
         <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent border-b-transparent rounded-full animate-spin"></div>
-        <span class="text-blue-600 font-medium text-lg">Procesando archivo...</span>
+        <span class="text-blue-600 font-medium text-lg animate-pulse">Procesando archivo...</span>
       </div>
     </div>
 
     <!-- Sección de previsualización -->
-    <div v-if="headers.length" class="bg-white shadow rounded-lg p-6 mb-6">
+    <div v-if="headers.length" class="bg-white shadow rounded-lg p-6 animate-fadeInUp delay-300">
       <h2 class="text-xl font-semibold mb-4">Previsualización de Datos</h2>
 
       <!-- Cabeceras -->
@@ -40,7 +85,7 @@
           <span
             v-for="(h, i) in headers"
             :key="i"
-            class="px-2 py-1 bg-gray-200 rounded font-mono text-sm"
+            class="px-2 py-1 bg-gray-200 rounded font-mono text-sm animate-pulse"
           >
             {{ h }}
           </span>
@@ -83,14 +128,14 @@
           class="border px-3 py-2 rounded w-full sm:w-auto flex-1"
         />
         <button
-          class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded disabled:opacity-50"
+          class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded disabled:opacity-50 transition-all duration-300 transform hover:scale-105"
           @click="generateSql"
           :disabled="!tableName"
         >
           Generar SQL
         </button>
         <button
-          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded disabled:opacity-50"
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded disabled:opacity-50 transition-all duration-300 transform hover:scale-105"
           @click="saveToDb"
           :disabled="!tableName"
         >
@@ -168,10 +213,24 @@ const saveToDb = async () => {
     alert(err.response?.data?.message || "Error guardando en BD");
   }
 };
-
 </script>
 
 <style scoped>
+/* Animaciones simples */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn { animation: fadeIn 0.8s ease forwards; }
+.animate-fadeInUp { animation: fadeInUp 0.8s ease forwards; }
+.animate-pulse { animation: pulse 1.5s infinite; }
+
 table tbody tr:hover {
   background-color: #f3f4f6;
 }
