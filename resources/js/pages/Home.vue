@@ -114,3 +114,4 @@ export default {
   50% { transform: translateY(-10px); }
 }
 </style>
+  

@@ -54,82 +54,77 @@ class ImportController extends Controller
     
 
     // Generar archivo SQL directamente del Excel
-    public function generateSql(Request $request)
-    {
-        $request->validate([
-            'table' => 'required|string',
-            'rows' => 'required|array'
-        ]);
+   // Generar archivo SQL directamente del Excel
+public function generateSql(Request $request)
+{
+    $request->validate([
+        'table' => 'required|string',
+        'rows' => 'required|array'
+    ]);
 
-        $table = $request->input('table');
-        $rows = $request->input('rows');
+    $table = $request->input('table');
+    $rows = $request->input('rows');
 
-        if (empty($rows)) {
-            return response()->json(['message' => 'No hay filas para exportar'], 422);
-        }
-
-        // Obtener todas las columnas del Excel (headers)
-        $first = $rows[0];
-        $columns = array_keys($first);
-
-        if (empty($columns)) {
-            return response()->json(['message' => 'No se encontraron columnas en los datos'], 422);
-        }
-
-        $sql = "";
-        
-        // Generar CREATE TABLE statement
-        $sql .= "-- Estructura de tabla generada automáticamente\n";
-        $sql .= "CREATE TABLE IF NOT EXISTS `{$table}` (\n";
-        
-        foreach ($columns as $index => $column) {
-            // Limpiar nombre de columna y asegurar que sea válido
-            $cleanColumn = preg_replace('/[^a-zA-Z0-9_]/', '_', $column);
-            $cleanColumn = trim($cleanColumn, '_');
-            if (empty($cleanColumn)) {
-                $cleanColumn = "column_" . ($index + 1);
-            }
-            
-            // Determinar tipo de datos básico (TEXT para simplicidad)
-            $sql .= "  `{$cleanColumn}` TEXT";
-            
-            if ($index < count($columns) - 1) {
-                $sql .= ",";
-            }
-            $sql .= "\n";
-        }
-        
-        $sql .= ");\n\n";
-        
-        // Generar INSERT statements
-        foreach ($rows as $r) {
-            $vals = [];
-            $columnsForInsert = [];
-            
-            foreach ($columns as $index => $c) {
-                // Usar el mismo nombre de columna limpio
-                $cleanColumn = preg_replace('/[^a-zA-Z0-9_]/', '_', $c);
-                $cleanColumn = trim($cleanColumn, '_');
-                if (empty($cleanColumn)) {
-                    $cleanColumn = "column_" . ($index + 1);
-                }
-                
-                $columnsForInsert[] = $cleanColumn;
-                $v = $r[$c] ?? null;
-                $vals[] = is_null($v) || $v === '' ? "NULL" : DB::getPdo()->quote((string)$v);
-            }
-            
-            $colsSql = implode(', ', array_map(fn($c) => "`{$c}`", $columnsForInsert));
-            $valsSql = implode(', ', $vals);
-            $sql .= "INSERT INTO `{$table}` ({$colsSql}) VALUES ({$valsSql});\n";
-        }
-
-        $filename = "{$table}_" . date('Ymd_His') . ".sql";
-
-        return response($sql, 200)
-            ->header('Content-Type', 'application/sql')
-            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+    if (empty($rows)) {
+        return response()->json(['message' => 'No hay filas para exportar'], 422);
     }
+
+    // Obtener todas las columnas del Excel (headers)
+    $first = $rows[0];
+    $columns = array_keys($first);
+
+    if (empty($columns)) {
+        return response()->json(['message' => 'No se encontraron columnas en los datos'], 422);
+    }
+
+    $sql = "";
+
+    // Generar CREATE TABLE statement
+    $sql .= "-- Estructura de tabla generada automáticamente\n";
+    $sql .= "CREATE TABLE IF NOT EXISTS `{$table}` (\n";
+
+    $cleanColumns = [];
+    foreach ($columns as $index => $column) {
+        // Limpiar nombre de columna y asegurar que sea válido
+        $cleanColumn = preg_replace('/[^a-zA-Z0-9_]/', '_', $column);
+        $cleanColumn = trim($cleanColumn, '_');
+        if (empty($cleanColumn)) {
+            $cleanColumn = "column_" . ($index + 1);
+        }
+        $cleanColumns[] = $cleanColumn;
+
+        // Determinar tipo de datos básico (TEXT por simplicidad)
+        $sql .= "  `{$cleanColumn}` TEXT";
+        if ($index < count($columns) - 1) {
+            $sql .= ",";
+        }
+        $sql .= "\n";
+    }
+
+    $sql .= ");\n\n";
+
+    // Generar INSERT statements en bloque
+    $sql .= "INSERT INTO `{$table}` (" . implode(', ', array_map(fn($c) => "`{$c}`", $cleanColumns)) . ") VALUES\n";
+
+    $valuesArr = [];
+    foreach ($rows as $r) {
+        $vals = [];
+        foreach ($columns as $index => $c) {
+            $v = $r[$c] ?? null;
+            $vals[] = is_null($v) || $v === '' ? "NULL" : DB::getPdo()->quote((string)$v);
+        }
+        $valuesArr[] = "(" . implode(", ", $vals) . ")";
+    }
+
+    $sql .= implode(",\n", $valuesArr) . ";\n";
+
+    $filename = "{$table}_" . date('Ymd_His') . ".sql";
+
+    return response($sql, 200)
+        ->header('Content-Type', 'application/sql')
+        ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+}
+
 
     // Guardar en BD (este método sí necesita que la tabla exista)
     public function saveToDb(Request $request)
